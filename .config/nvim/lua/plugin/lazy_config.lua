@@ -22,6 +22,14 @@ return {
         end
     },
 
+    -- Colorizer
+    {
+        "norcalli/nvim-colorizer.lua",
+        config = function()
+            require("colorizer").setup()
+        end,
+    },
+
     -- Nvim-tree for browsing files
     {
         "nvim-tree/nvim-tree.lua",
@@ -108,6 +116,16 @@ return {
             })
         end
     },
+
+    -- Auto pair
+    {
+        'windwp/nvim-autopairs',
+        event = "InsertEnter",
+        config = true
+        -- use opts = {} for passing setup options
+        -- this is equivalent to setup({}) function
+    },
+
 
     -- Treesitter for better syntax highlighting
     {
