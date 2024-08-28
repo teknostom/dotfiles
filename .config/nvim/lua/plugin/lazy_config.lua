@@ -30,6 +30,10 @@ return {
         end,
     },
 
+    {
+        "f-person/git-blame.nvim",
+    },
+
     -- Nvim-tree for browsing files
     {
         "nvim-tree/nvim-tree.lua",
@@ -99,8 +103,15 @@ return {
               lsp_attach = lsp_attach,
               capabilities = require('cmp_nvim_lsp').default_capabilities(),
             })
+            require("mason-lspconfig").setup {
+                ensure_installed = { "lua_ls", "rust_analyzer", "tsserver", "cssls", "eslint" },
+            }
             require('lspconfig').rust_analyzer.setup({})
             require('lspconfig').lua_ls.setup({})
+            require('lspconfig').tsserver.setup({})
+            require('lspconfig').basedpyright.setup({})
+            require('lspconfig').cssls.setup({})
+            require('lspconfig').eslint.setup({})
             local cmp = require('cmp')
 
             cmp.setup({
@@ -113,6 +124,27 @@ return {
                 end,
               },
               mapping = cmp.mapping.preset.insert({}),
+            })
+            vim.api.nvim_create_autocmd({ "CursorHold" }, {
+                pattern = "*",
+                callback = function()
+                    for _, winid in pairs(vim.api.nvim_tabpage_list_wins(0)) do
+                        if vim.api.nvim_win_get_config(winid).zindex then
+                            return
+                        end
+                    end
+                    vim.diagnostic.open_float({
+                        scope = "cursor",
+                        focusable = false,
+                        close_events = {
+                            "CursorMoved",
+                            "CursorMovedI",
+                            "BufHidden",
+                            "InsertCharPre",
+                            "WinLeave",
+                        },
+                    })
+                end
             })
         end
     },
@@ -133,7 +165,7 @@ return {
         run = ":TSUpdate",
         config = function()
             require("nvim-treesitter.configs").setup {
-                ensure_installed = { "lua", "javascript", "python", "rust"}, -- Add other languages as needed
+                ensure_installed = { "lua", "javascript", "java", "python", "c", "cpp", "css", "dockerfile", "yaml", "php", "make", "html", "vimdoc", "rust", }, -- Add other languages as needed
                 highlight = { enable = true }
             }
         end
