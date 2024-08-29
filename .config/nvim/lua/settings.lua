@@ -3,6 +3,7 @@ vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.expandtab = true
 vim.opt.tabstop = 4
+vim.opt.updatetime = 500
 vim.opt.softtabstop = 2
 vim.opt.shiftwidth = 4
 vim.opt.encoding = "utf-8"
