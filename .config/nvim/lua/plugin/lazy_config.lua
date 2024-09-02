@@ -104,13 +104,15 @@ return {
               capabilities = require('cmp_nvim_lsp').default_capabilities(),
             })
             require("mason-lspconfig").setup {
-                ensure_installed = { "lua_ls", "rust_analyzer", "tsserver", "cssls", "eslint" },
+                ensure_installed = { "lua_ls", "rust_analyzer", "tsserver", "cssls", "eslint", "jdtls", "biome"},
             }
             require('lspconfig').rust_analyzer.setup({})
+            -- require('lspconfig').jdtls.setup({})
             require('lspconfig').lua_ls.setup({})
             require('lspconfig').tsserver.setup({})
             require('lspconfig').basedpyright.setup({})
             require('lspconfig').cssls.setup({})
+            require('lspconfig').biome.setup({})
             require('lspconfig').eslint.setup({})
             local cmp = require('cmp')
 
@@ -147,6 +149,35 @@ return {
                 end
             })
         end
+    },
+
+    {
+      "scalameta/nvim-metals",
+      dependencies = {
+        "nvim-lua/plenary.nvim",
+      },
+      ft = { "scala", "sbt", "java" },
+      opts = function()
+        local metals_config = require("metals").bare_config()
+        metals_config.on_attach = function(client, bufnr)
+          local opts = {buffer = bufnr}
+          vim.keymap.set('n', 'K', '<cmd>lua vim.lsp.buf.hover()<cr>', opts)
+          vim.keymap.set('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<cr>', opts)
+          vim.keymap.set('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<cr>', opts)
+          vim.keymap.set('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<cr>', opts)
+          vim.keymap.set('n', 'go', '<cmd>lua vim.lsp.buf.type_definition()<cr>', opts)
+          vim.keymap.set('n', 'gr', '<cmd>lua vim.lsp.buf.references()<cr>', opts)
+          vim.keymap.set('n', 'gs', '<cmd>lua vim.lsp.buf.signature_help()<cr>', opts)
+          vim.keymap.set('n', '<F2>', '<cmd>lua vim.lsp.buf.rename()<cr>', opts) vim.keymap.set({'n', 'x'}, '<F3>', '<cmd>lua vim.lsp.buf.format({async = true})<cr>', opts) vim.keymap.set('n', '<F4>', '<cmd>lua vim.lsp.buf.code_action()<cr>', opts) end return metals_config end, config = function(self, metals_config)
+        local nvim_metals_group = vim.api.nvim_create_augroup("nvim-metals", { clear = true })
+        vim.api.nvim_create_autocmd("FileType", {
+          pattern = self.ft,
+          callback = function()
+            require("metals").initialize_or_attach(metals_config)
+          end,
+          group = nvim_metals_group,
+        })
+      end
     },
 
     -- Auto pair
@@ -209,7 +240,7 @@ return {
     -- Noice for better UI/notifications
     {
         "folke/noice.nvim",
-        dependencies = { "MunifTanjim/nui.nvim" },
+        dependencies = { "MunifTanjim/nui.nvim", "hrsh7th/nvim-cmp"},
         config = function()
             require("noice").setup({
               lsp = {
