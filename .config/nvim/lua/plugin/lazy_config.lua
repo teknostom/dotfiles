@@ -4,6 +4,12 @@ local WIDTH_RATIO = 0.5  -- You can change this too
 return {
     -- Lazy.nvim is configured by itself above
     {
+        "willothy/flatten.nvim",
+        config = true,
+        lazy = false,
+        priority = 1001,
+    },
+    {
         "stevearc/conform.nvim",
         opts = {},
         config = function()
@@ -20,17 +26,10 @@ return {
                 },
             })
             vim.api.nvim_create_autocmd("BufWritePre", {
-                pattern = "*.js,*.tsx",
+                pattern = "*.js,*.tsx,*.ts,*.json,*.css",
                 callback = function(args)
                     require("conform").format({ bufnr = args.buf })
                 end,
-            })
-            require("conform").setup({
-                format_on_save = {
-                    -- These options will be passed to conform.format()
-                    timeout_ms = 2000,
-                    lsp_format = "fallback",
-                },
             })
         end,
     },
@@ -41,6 +40,8 @@ return {
         config = function()
             local builtin = require("telescope.builtin")
             vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
+            vim.keymap.set("n", "<leader>fb", builtin.find_files, {})
+            require('telescope').setup()
         end,
     },
 
@@ -135,7 +136,7 @@ return {
                 capabilities = require('cmp_nvim_lsp').default_capabilities(),
             })
             require("mason-lspconfig").setup {
-                ensure_installed = { "lua_ls", "rust_analyzer", "tsserver", "cssls", "eslint", "jdtls", "biome" },
+                ensure_installed = { "lua_ls", "rust_analyzer", "tsserver", "cssls", "eslint", "jdtls", "biome", "cssmodules_ls", "sonarlint_language_server" },
             }
             require('lspconfig').rust_analyzer.setup({})
             -- require('lspconfig').jdtls.setup({})
@@ -145,6 +146,7 @@ return {
             require('lspconfig').cssls.setup({})
             require('lspconfig').biome.setup({})
             require('lspconfig').eslint.setup({})
+            require('lspconfig').cssmodules_ls.setup({})
             local cmp = require('cmp')
 
             cmp.setup({
@@ -241,6 +243,12 @@ return {
                 ensure_installed = { "lua", "javascript", "java", "python", "c", "cpp", "css", "dockerfile", "yaml", "php", "make", "html", "vimdoc", "rust", }, -- Add other languages as needed
                 highlight = { enable = true }
             }
+            vim.api.nvim_create_autocmd("BufEnter", {
+                pattern = "Jenkinsfile*",
+                callback = function()
+                    vim.cmd("set filetype=groovy")
+                end,
+            })
         end
     },
 
@@ -260,6 +268,23 @@ return {
         "folke/trouble.nvim",
         dependencies = { "nvim-tree/nvim-web-devicons" },
         config = function()
+            local actions = require("telescope.actions")
+            local open_with_trouble = require("trouble.sources.telescope").open
+
+            -- Use this to add more results without clearing the trouble list
+            local add_to_trouble = require("trouble.sources.telescope").add
+
+            local telescope = require("telescope")
+            telescope.setup({
+                defaults = {
+                    mappings = {
+                        i = { ["<c-t>"] = open_with_trouble },
+                        n = { ["<c-t>"] = open_with_trouble },
+                    },
+                },
+            })
+
+            require("trouble").setup {}
             require("trouble").setup {}
         end,
         keys = {
@@ -270,6 +295,23 @@ return {
             },
         }
     },
+    {
+        "folke/todo-comments.nvim",
+        dependencies = { "nvim-lua/plenary.nvim" },
+        opts = {
+            -- your configuration comes here
+            -- or leave it empty to use the default settings
+            -- refer to the configuration section below
+        },
+        keys = {
+            {
+                "<leader>xt",
+                "<cmd>TodoTrouble<cr>",
+                desc = "Diagnostics (Trouble)",
+            },
+        }
+    },
+
 
     -- Commenting utility
     {
@@ -285,6 +327,41 @@ return {
         dependencies = { "MunifTanjim/nui.nvim", "hrsh7th/nvim-cmp" },
         config = function()
             require("noice").setup({
+                views = {
+                    cmdline_popup = {
+                        position = {
+                            row = 5,
+                            col = "50%",
+                        },
+                        size = {
+                            width = 60,
+                            height = "auto",
+                        },
+                    },
+                    popupmenu = {
+                        relative = "editor",
+                        position = {
+                            row = 8,
+                            col = "50%",
+                        },
+                        size = {
+                            width = 60,
+                            height = 10,
+                        },
+                        border = {
+                            style = "rounded",
+                            padding = { 0, 1 },
+                        },
+                        win_options = {
+                            winhighlight = { Normal = "Normal", FloatBorder = "DiagnosticInfo" },
+                        },
+                    },
+                },
+                popupmenu = {
+                    enabled = true,
+                    backend = "cmp",
+                },
+
                 lsp = {
                     -- override markdown rendering so that **cmp** and other plugins use **Treesitter**
                     override = {
@@ -329,13 +406,18 @@ return {
                         {
                             require("noice").api.status.command.get,
                             cond = require("noice").api.status.command.has,
-                            color = { fg = "#ff9e64" },
+                            color = { fg = "#99FF99" },
                         },
                         {
                             require("noice").api.status.search.get,
                             cond = require("noice").api.status.search.has,
-                            color = { fg = "#ff9e64" },
+                            color = { fg = "#99FF99" },
                         },
+                        {
+                            require("noice").api.statusline.mode.get,
+                            cond = require("noice").api.statusline.mode.has,
+                            color = { fg = "#99FF99" },
+                        }
                     },
                 },
             })
@@ -364,6 +446,28 @@ return {
             })
             vim.cmd.colorscheme "catppuccin"
         end
-    }
+    },
 
+    {
+        "nvim-neotest/neotest",
+        dependencies = {
+            "stevanmilic/neotest-scala",
+            "nvim-tree/nvim-web-devicons",
+            "nvim-neotest/nvim-nio",
+            "nvim-lua/plenary.nvim",
+            "antoinemadec/FixCursorHold.nvim",
+            "nvim-treesitter/nvim-treesitter"
+        },
+        config = function()
+            require("neotest").setup({
+                adapters = {
+                    require("neotest-scala")({
+                        runner = "sbt",
+                        framework = "scalatest",
+                    })
+                }
+            })
+            vim.keymap.set('n', '<leader>tt', ':lua require("neotest").run.run(vim.fn.expand("%"))<CR>', {})
+        end
+    }
 }

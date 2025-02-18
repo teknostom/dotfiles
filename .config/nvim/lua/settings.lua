@@ -18,4 +18,5 @@ vim.diagnostic.config {
     focusable = true,
   },
 }
-
+vim.cmd('set nofixeol')
+vim.cmd('set noeol')
