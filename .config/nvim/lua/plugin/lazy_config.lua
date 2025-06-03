@@ -3,6 +3,7 @@ local WIDTH_RATIO = 0.5  -- You can change this too
 
 return {
     -- Lazy.nvim is configured by itself above
+    "Exafunction/codeium.vim",
     {
         "willothy/flatten.nvim",
         config = true,
@@ -135,9 +136,6 @@ return {
                 lsp_attach = lsp_attach,
                 capabilities = require('cmp_nvim_lsp').default_capabilities(),
             })
-            require("mason-lspconfig").setup {
-                ensure_installed = { "lua_ls", "rust_analyzer", "tsserver", "cssls", "eslint", "jdtls", "biome", "cssmodules_ls", "sonarlint_language_server" },
-            }
             require('lspconfig').rust_analyzer.setup({})
             -- require('lspconfig').jdtls.setup({})
             require('lspconfig').lua_ls.setup({})
@@ -259,7 +257,13 @@ return {
     {
         "lewis6991/gitsigns.nvim",
         config = function()
-            require("gitsigns").setup()
+            require("gitsigns").setup({
+                on_attach = function(bufnr)
+                    local gs = package.loaded.gitsigns
+
+                    vim.keymap.set("n", "<leader>gb", ":Gitsigns blame<cr>")
+                end
+            })
         end
     },
 
