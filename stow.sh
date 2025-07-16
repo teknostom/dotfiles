@@ -85,9 +85,35 @@ install_stow() {
     fi
 }
 
-# Function to stow all packages
+# Function to draw progress bar
+draw_progress_bar() {
+    local current=$1
+    local total=$2
+    local width=50
+    local percentage=$((current * 100 / total))
+    local filled=$((current * width / total))
+    local empty=$((width - filled))
+    
+    printf "\r["
+    printf "%*s" $filled | tr ' ' '='
+    printf "%*s" $empty | tr ' ' ' '
+    printf "] %d%% (%d/%d)" $percentage $current $total
+}
+
+# Function to check if a binary exists
+check_binary() {
+    local binary_name="$1"
+    if command -v "$binary_name" &> /dev/null; then
+        echo "✓"
+    else
+        echo "✗"
+    fi
+}
+
+# Function to stow all packages with progress bar
 stow_packages() {
     local dotfiles_dir="${1:-$HOME/.dotfiles}"
+    local force_mode=$2
     
     if [ ! -d "$dotfiles_dir" ]; then
         print_error "Dotfiles directory not found: $dotfiles_dir"
@@ -107,19 +133,71 @@ stow_packages() {
         return 0
     fi
     
-    print_status "Found packages: $(echo $packages | tr '\n' ' ')"
+    # Convert to array for easier handling
+    local package_array=($packages)
+    local total_packages=${#package_array[@]}
     
-    # Stow each package
+    # Show packages with binary detection
+    local package_list=""
     for package in $packages; do
-        print_status "Stowing package: $package"
-        
-        if stow "$package"; then
-            print_status "Successfully stowed: $package"
-        else
-            print_error "Failed to stow: $package"
-            print_warning "This might be due to existing files. Consider using 'stow --adopt $package' or removing conflicting files."
-        fi
+        local status=$(check_binary "$package")
+        package_list="$package_list $package($status)"
     done
+    
+    print_status "Found ${total_packages} packages:$package_list"
+    print_warning "Binary detection assumes package name = binary name and might not be accurate"
+    echo ""
+    local total_packages=${#package_array[@]}
+    local current_package=0
+    local stowed_count=0
+    local error_count=0
+    local unchanged_count=0
+    
+    # Stow each package with progress bar
+    for package in "${package_array[@]}"; do
+        current_package=$((current_package + 1))
+        
+        # Draw progress bar
+        draw_progress_bar $current_package $total_packages
+        
+        # Capture stow output and check for success
+        local stow_output
+        local stow_success=false
+        
+        if [ "$force_mode" = true ]; then
+            stow_output=$(stow --adopt "$package" 2>&1)
+            stow_success=$?
+        else
+            stow_output=$(stow "$package" 2>&1)
+            stow_success=$?
+        fi
+        
+        if [ $stow_success -eq 0 ]; then
+            # Check if anything was actually changed
+            if echo "$stow_output" | grep -q "LINK"; then
+                stowed_count=$((stowed_count + 1))
+            else
+                unchanged_count=$((unchanged_count + 1))
+            fi
+        else
+            error_count=$((error_count + 1))
+            # Clear the progress bar line and print error
+            printf "\r%*s\r" 80 ""
+            print_error "Failed to stow: $package"
+            if [ "$force_mode" != true ]; then
+                print_warning "This might be due to existing files. Consider using --force to adopt existing files."
+            fi
+            echo ""
+        fi
+        
+        # Small delay to make progress visible
+        sleep 0.1
+    done
+    
+    # Clear progress bar and show final results
+    printf "\r%*s\r" 80 ""
+    echo -e "${GREEN}stowed: ${stowed_count}${NC}       ${RED}errors: ${error_count}${NC}       ${YELLOW}unchanged: ${unchanged_count}${NC}"
+    echo ""
 }
 
 # Function to show usage
@@ -198,25 +276,8 @@ main() {
         exit 0
     fi
     
-    # Stow packages
-    for package in $packages; do
-        print_status "Stowing package: $package"
-        
-        if [ "$force" = true ]; then
-            if stow --adopt "$package"; then
-                print_status "Successfully adopted and stowed: $package"
-            else
-                print_error "Failed to stow: $package"
-            fi
-        else
-            if stow "$package"; then
-                print_status "Successfully stowed: $package"
-            else
-                print_error "Failed to stow: $package"
-                print_warning "Try using --force to adopt existing files, or remove conflicting files manually"
-            fi
-        fi
-    done
+    # Stow packages with progress bar
+    stow_packages "$dotfiles_dir" "$force"
     
     print_status "Dotfiles installation complete!"
 }
