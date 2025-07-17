@@ -3,7 +3,7 @@ local WIDTH_RATIO = 0.5  -- You can change this too
 
 return {
     -- Lazy.nvim is configured by itself above
-    "Exafunction/codeium.vim",
+    "Exafunction/windsurf.vim",
     {
         "willothy/flatten.nvim",
         config = true,
