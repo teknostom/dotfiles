@@ -1,2 +1,7 @@
 [font]
 normal = {family="CaskaydiaCoveNerdFont", style= "Regular"}
+
+[general]
+import = [
+    "~/.cache/wal/colors-alacritty.toml"
+]

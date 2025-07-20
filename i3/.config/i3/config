@@ -13,16 +13,19 @@ set $mod Mod4
 
 gaps inner 10
 gaps outer 5
-bindsym $mod+d exec rofi -show run
+bindsym $mod+d exec rofi -show run -theme ~/.config/rofi/wal.rasi
 bindsym $mod+Return exec alacritty
 for_window [window_role="pop-up"] floating enable
 for_window [window_role="task_dialog"] floating enable
 exec_always --no-startup-id picom
 exec_always --no-startup-id setxkbmap se
 bindsym $mod+Shift+r restart
+for_window [class="^.*"] border pixel 0
+mouse_warping output
 
 exec_always --no-startup-id xrandr --output DVI-D-0 --pos 0x0 --output DP-4 --pos 1920x0 --output DP-2 --pos 3840x0 --output DP-0 --pos 5760x0
 exec_always wal -R
+exec_always easyeffects --gapplication-service &
 
 set_from_resource $bg		i3wm.color3
 set_from_resource $bg-alt	i3wm.color0
