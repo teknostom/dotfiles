@@ -13,17 +13,20 @@ set $mod Mod4
 
 gaps inner 10
 gaps outer 5
-bindsym $mod+d exec rofi -show run -theme ~/.config/rofi/wal.rasi
+bindsym $mod+d exec rofi -show drun -theme ~/.config/rofi/wal.rasi -terminal alacritty
 bindsym $mod+Return exec alacritty
 for_window [window_role="pop-up"] floating enable
 for_window [window_role="task_dialog"] floating enable
 exec_always --no-startup-id picom
 exec_always --no-startup-id setxkbmap se
 bindsym $mod+Shift+r restart
+bindsym $mod+Shift+s exec screengrab -r
+bindsym $mod+p exec playerctl play-pause
 for_window [class="^.*"] border pixel 0
 mouse_warping output
 
-exec_always --no-startup-id xrandr --output DVI-D-0 --pos 0x0 --output DP-4 --pos 1920x0 --output DP-2 --pos 3840x0 --output DP-0 --pos 5760x0
+# system specific settings
+exec_always --no-startup-id xrandr --output DVI-D-0 --pos 0x0 --output DP-0 --pos 1920x0 --output DP-2 --pos 3840x0 --output DP-4 --pos 5760x0
 exec_always wal -R
 exec_always easyeffects --gapplication-service &
 
@@ -80,7 +83,7 @@ bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOU
 set $up l
 set $down k
 set $left j
-set $right semicolon
+set $right odiaeresis
 
 # use Mouse+Mod4 to drag floating windows to their wanted position
 floating_modifier Mod4
