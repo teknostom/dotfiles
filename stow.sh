@@ -305,7 +305,7 @@ show_usage() {
     echo "  -h, --help               Show this help message"
     echo "  --dry-run                Show what would be stowed without actually doing it"
     echo "  --force                  Use stow --adopt to adopt existing files"
-    echo "  --install-packages       Install missing packages via package manager"
+    echo "  --skip-packages          Skip package installation"
     echo "  --skip-stow-install      Skip installing stow (assume it's already installed)"
 }
 
@@ -314,7 +314,7 @@ main() {
     local dotfiles_dir="$HOME/.dotfiles"
     local dry_run=false
     local force=false
-    local install_pkgs=false
+    local skip_packages=false
     local skip_stow_install=false
 
     # Parse command line arguments
@@ -332,8 +332,8 @@ main() {
                 force=true
                 shift
                 ;;
-            --install-packages)
-                install_pkgs=true
+            --skip-packages)
+                skip_packages=true
                 shift
                 ;;
             --skip-stow-install)
@@ -370,9 +370,11 @@ main() {
     
     cd "$dotfiles_dir"
 
-    # Install packages if requested
-    if [ "$install_pkgs" = true ]; then
+    # Install packages unless skipped (pacman --needed will skip already installed)
+    if [ "$skip_packages" = false ]; then
         install_packages
+    else
+        print_status "Skipping package installation"
     fi
 
     # Find packages
