@@ -51,6 +51,7 @@ bindsym $mod+Ctrl+Right move workspace to output right
 
 for_window [window_role="pop-up"] floating enable
 for_window [window_role="task_dialog"] floating enable
+<<<<<<< HEAD
 mouse_warping output
 
 # ============================================================
@@ -74,6 +75,19 @@ exec_always --no-startup-id xrandr --output DVI-D-0 --pos 0x0 --output DP-4 --po
 exec_always wal -R -o ~/.config/wal/reload-dunst.sh
 
 # Audio effects
+=======
+exec_always --no-startup-id picom
+exec_always --no-startup-id setxkbmap se
+bindsym $mod+Shift+r restart
+bindsym $mod+Shift+s exec screengrab -r
+bindsym $mod+p exec playerctl play-pause
+for_window [class="^.*"] border pixel 0
+mouse_warping output
+
+# system specific settings
+exec_always --no-startup-id xrandr --output DVI-D-0 --pos 0x0 --output DP-0 --pos 1920x0 --output DP-2 --pos 3840x0 --output DP-4 --pos 5760x0
+exec_always wal -R
+>>>>>>> 6fbd2e6aa40c4fa5f8ead9337c7b71fa32e7ffb8
 exec_always easyeffects --gapplication-service &
 
 # GTK theme
