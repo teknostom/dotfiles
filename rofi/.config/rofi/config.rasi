@@ -1,0 +1,87 @@
+configuration {
+    modi: "drun,run,window";
+    show-icons: true;
+    display-drun: "Apps";
+    display-run: "Run";
+    display-window: "Window";
+}
+
+@import "~/.cache/wal/colors-rofi.rasi"
+
+* {
+    border-colour: @selected;
+    handle-colour: @selected;
+    background-colour: @background;
+    foreground-colour: @foreground;
+    alternate-background: @background-alt;
+    normal-background: @background;
+    normal-foreground: @foreground;
+    urgent-background: @urgent;
+    urgent-foreground: @foreground;
+    active-background: @active;
+    active-foreground: @foreground;
+    selected-normal-background: @selected;
+    selected-normal-foreground: @foreground;
+    selected-urgent-background: @active;
+    selected-urgent-foreground: @foreground;
+    selected-active-background: @selected;
+    selected-active-foreground: @foreground;
+    alternate-normal-background: @background;
+    alternate-normal-foreground: @foreground;
+    alternate-urgent-background: @urgent;
+    alternate-urgent-foreground: @foreground;
+    alternate-active-background: @active;
+    alternate-active-foreground: @foreground;
+}
+
+window {
+    transparency: "real";
+    background-color: @background-colour;
+    border-color: @border-colour;
+    border: 2px;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+mainbox {
+    background-color: @background-colour;
+}
+
+inputbar {
+    children: [prompt,entry];
+    background-color: @background-alt;
+    border-radius: 5px;
+    padding: 8px;
+}
+
+prompt {
+    background-color: @background-alt;
+    text-color: @foreground-colour;
+    padding: 0px 10px 0px 0px;
+}
+
+entry {
+    background-color: @background-alt;
+    text-color: @foreground-colour;
+    placeholder-color: @foreground-colour;
+    placeholder: "Search...";
+}
+
+listview {
+    background-color: @background-colour;
+    padding: 10px 0px 0px;
+    columns: 1;
+    lines: 8;
+}
+
+element {
+    padding: 8px;
+    background-color: @normal-background;
+    text-color: @normal-foreground;
+    border-radius: 5px;
+}
+
+element selected {
+    background-color: @selected-normal-background;
+    text-color: @selected-normal-foreground;
+}

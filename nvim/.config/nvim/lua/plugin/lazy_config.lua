@@ -1,39 +1,67 @@
-local HEIGHT_RATIO = 0.8 -- You can change this
-local WIDTH_RATIO = 0.5  -- You can change this too
+-- Configuration constants for floating window sizes
+local HEIGHT_RATIO = 0.8
+local WIDTH_RATIO = 0.5
 
 return {
-    -- Lazy.nvim is configured by itself above
-    "github/copilot.vim",
+    -- ============================================================
+    -- Core Utilities
+    -- ============================================================
     {
         "willothy/flatten.nvim",
         config = true,
         lazy = false,
         priority = 1001,
     },
+
+    -- Database client
+    {
+        "kndndrj/nvim-dbee",
+        dependencies = {
+            "MunifTanjim/nui.nvim",
+        },
+        build = function()
+            require("dbee").install()
+        end,
+        config = function()
+            require("dbee").setup()
+            vim.api.nvim_create_user_command('DB', function()
+                vim.cmd('tabnew')
+                require('dbee').open()
+            end, {})
+        end,
+    },
+
+    -- ============================================================
+    -- Formatting & LSP
+    -- ============================================================
+
+    -- Code formatting
     {
         "stevearc/conform.nvim",
         opts = {},
         config = function()
             require("conform").setup({
                 formatters_by_ft = {
-                    typescript = { 'prettierd', "prettier", stop_after_first = true },
-                    typescriptreact = { 'prettierd', "prettier", stop_after_first = true },
-                    javascript = { 'prettierd', "prettier", stop_after_first = true },
-                    javascriptreact = { 'prettierd', "prettier", stop_after_first = true },
-                    json = { 'prettierd', "prettier", stop_after_first = true },
-                    html = { 'prettierd', "prettier", stop_after_first = true },
-                    css = { 'prettierd', "prettier", stop_after_first = true },
-
+                    typescript = { stop_after_first = true },
+                    typescriptreact = { stop_after_first = true },
+                    javascript = { stop_after_first = true },
+                    javascriptreact = { stop_after_first = true },
+                    vue = { stop_after_first = true },
+                    json = { stop_after_first = true },
+                    html = { stop_after_first = true },
+                    css = { stop_after_first = true },
+                    java = { lsp_format = "prefer" },
                 },
-            })
-            vim.api.nvim_create_autocmd("BufWritePre", {
-                pattern = "*.js,*.tsx,*.ts,*.json,*.css",
-                callback = function(args)
-                    require("conform").format({ bufnr = args.buf })
-                end,
+                default_format_opts = {
+                    lsp_format = "fallback",
+                },
             })
         end,
     },
+
+    -- ============================================================
+    -- File Navigation & Search
+    -- ============================================================
     -- Telescope
     {
         "nvim-telescope/telescope.nvim",
@@ -46,7 +74,8 @@ return {
         end,
     },
 
-    -- Mason for LSP management
+
+    -- LSP package manager
     {
         "williamboman/mason.nvim",
         config = function()
@@ -54,17 +83,24 @@ return {
         end
     },
 
-    -- Colorizer
+    -- ============================================================
+    -- UI Enhancements
+    -- ============================================================
+
+    -- Color highlighting
     {
-        "norcalli/nvim-colorizer.lua",
+        "brenoprata10/nvim-highlight-colors",
         config = function()
-            require("colorizer").setup()
-        end,
+            require("nvim-highlight-colors").setup {}
+        end
     },
+
+    -- Git blame
     {
         "f-person/git-blame.nvim",
     },
-    -- Nvim-tree for browsing files
+
+    -- File browser
     {
         "nvim-tree/nvim-tree.lua",
         config = function()
@@ -100,13 +136,18 @@ return {
                 },
                 renderer = {
                     group_empty = true,
-                }
+                },
             })
             vim.keymap.set('n', '<C-b>', ':NvimTreeToggle<CR>', {})
         end
     },
 
-    -- LSP-Zero for easier LSP setup
+
+    -- ============================================================
+    -- LSP Configuration
+    -- ============================================================
+
+    -- LSP setup helper
     {
         "VonHeikemen/lsp-zero.nvim",
         dependencies = {
@@ -114,6 +155,7 @@ return {
             "williamboman/mason-lspconfig.nvim",
             "hrsh7th/nvim-cmp",
             "hrsh7th/cmp-nvim-lsp",
+            "pmizio/typescript-tools.nvim",
             "L3MON4D3/LuaSnip"
         },
         config = function()
@@ -136,15 +178,27 @@ return {
                 lsp_attach = lsp_attach,
                 capabilities = require('cmp_nvim_lsp').default_capabilities(),
             })
-            require('lspconfig').rust_analyzer.setup({})
-            -- require('lspconfig').jdtls.setup({})
-            require('lspconfig').lua_ls.setup({})
-            require('lspconfig').ts_ls.setup({})
-            require('lspconfig').basedpyright.setup({})
-            require('lspconfig').cssls.setup({})
-            require('lspconfig').biome.setup({})
-            require('lspconfig').eslint.setup({})
-            require('lspconfig').cssmodules_ls.setup({})
+            local lspconfig = require('lspconfig')
+
+            -- Language servers
+            lspconfig.rust_analyzer.setup({})
+            lspconfig.lua_ls.setup({})
+            lspconfig.basedpyright.setup({})
+            lspconfig.cssls.setup({})
+            lspconfig.biome.setup({})
+            lspconfig.eslint.setup({})
+            lspconfig.cssmodules_ls.setup({})
+
+            -- TypeScript with Vue support
+            require("typescript-tools").setup({
+                on_attach = lsp_attach,
+                filetypes = { "javascript", "typescript", "vue" },
+                settings = {
+                    tsserver_plugins = {
+                        "@vue/typescript-plugin"
+                    },
+                }
+            })
             local cmp = require('cmp')
 
             cmp.setup({
@@ -162,75 +216,71 @@ return {
                 },
                 mapping = cmp.mapping.preset.insert({}),
             })
-            vim.api.nvim_create_autocmd({ "CursorHold" }, {
-                pattern = "*",
-                callback = function()
-                    for _, winid in pairs(vim.api.nvim_tabpage_list_wins(0)) do
-                        if vim.api.nvim_win_get_config(winid).zindex then
-                            return
-                        end
-                    end
-                    vim.diagnostic.open_float({
-                        scope = "cursor",
-                        focusable = false,
-                        close_events = {
-                            "CursorMoved",
-                            "CursorMovedI",
-                            "BufHidden",
-                            "InsertCharPre",
-                            "WinLeave",
-                        },
-                    })
-                    vim.lsp.buf.hover()
-                end
-            })
         end
     },
 
+    -- Java LSP
     {
-        "scalameta/nvim-metals",
-        dependencies = {
-            "nvim-lua/plenary.nvim",
-        },
-        ft = { "scala", "sbt", "java" },
-        opts = function()
-            local metals_config = require("metals").bare_config()
-            metals_config.on_attach = function(client, bufnr)
-                local opts = { buffer = bufnr }
-                vim.keymap.set('n', 'K', '<cmd>lua vim.lsp.buf.hover()<cr>', opts)
-                vim.keymap.set('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<cr>', opts)
-                vim.keymap.set('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<cr>', opts)
-                vim.keymap.set('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<cr>', opts)
-                vim.keymap.set('n', 'go', '<cmd>lua vim.lsp.buf.type_definition()<cr>', opts)
-                vim.keymap.set('n', 'gr', '<cmd>lua vim.lsp.buf.references()<cr>', opts)
-                vim.keymap.set('n', 'gs', '<cmd>lua vim.lsp.buf.signature_help()<cr>', opts)
-                vim.keymap.set('n', '<F2>', '<cmd>lua vim.lsp.buf.rename()<cr>', opts)
-                vim.keymap.set({ 'n', 'x' }, '<F3>', '<cmd>lua vim.lsp.buf.format({async = true})<cr>', opts)
-                vim.keymap.set('n', '<F4>', '<cmd>lua vim.lsp.buf.code_action()<cr>', opts)
-            end
-            return metals_config
-        end,
-        config = function(self, metals_config)
-            local nvim_metals_group = vim.api.nvim_create_augroup("nvim-metals", { clear = true })
+        "mfussenegger/nvim-jdtls",
+        ft = "java",
+        init = function()
             vim.api.nvim_create_autocmd("FileType", {
-                pattern = self.ft,
+                pattern = "java",
                 callback = function()
-                    require("metals").initialize_or_attach(metals_config)
+                    local jdtls_setup = require('jdtls.setup')
+                    local config = {
+                        cmd = { 'jdtls' },
+                        root_dir = jdtls_setup.find_root({ 'gradlew', 'mvnw', '.git', 'pom.xml', 'build.gradle' }),
+                        settings = {
+                            java = {
+                                format = {
+                                    enabled = true,
+                                },
+                            },
+                        },
+                    }
+                    require('jdtls').start_or_attach(config)
                 end,
-                group = nvim_metals_group,
             })
-        end
+        end,
     },
 
-    -- Auto pair
+    -- ============================================================
+    -- Editor Enhancements
+    -- ============================================================
+
+    -- Auto-pairing brackets
     {
         'windwp/nvim-autopairs',
         event = "InsertEnter",
         config = true
-        -- use opts = {} for passing setup options
-        -- this is equivalent to setup({}) function
     },
 
+    -- Commenting utility
+    {
+        "numToStr/Comment.nvim",
+        config = function()
+            require("Comment").setup()
+        end
+    },
+
+    -- TODO comments highlighting
+    {
+        "folke/todo-comments.nvim",
+        dependencies = { "nvim-lua/plenary.nvim" },
+        opts = {},
+        keys = {
+            {
+                "<leader>xt",
+                "<cmd>TodoTrouble<cr>",
+                desc = "Diagnostics (Trouble)",
+            },
+        }
+    },
+
+    -- ============================================================
+    -- Syntax & Highlighting
+    -- ============================================================
 
     -- Treesitter for better syntax highlighting
     {
@@ -238,7 +288,7 @@ return {
         run = ":TSUpdate",
         config = function()
             require("nvim-treesitter.configs").setup {
-                ensure_installed = { "lua", "javascript", "java", "python", "c", "cpp", "css", "dockerfile", "yaml", "php", "make", "html", "vimdoc", "rust", }, -- Add other languages as needed
+                ensure_installed = { "lua", "javascript", "typescript", "java", "python", "c", "cpp", "css", "dockerfile", "yaml", "php", "make", "html", "vimdoc", "rust", "vue" },
                 highlight = { enable = true }
             }
             vim.api.nvim_create_autocmd("BufEnter", {
@@ -250,10 +300,14 @@ return {
         end
     },
 
-    -- NerdIcons for better icon support
+    -- Icon support
     "nvim-tree/nvim-web-devicons",
 
-    -- Git signs
+    -- ============================================================
+    -- Git Integration
+    -- ============================================================
+
+    -- Git signs in gutter
     {
         "lewis6991/gitsigns.nvim",
         config = function()
@@ -267,28 +321,15 @@ return {
         end
     },
 
-    -- Trouble for better diagnostics
+    -- ============================================================
+    -- Diagnostics & Debugging
+    -- ============================================================
+
+    -- Diagnostic viewer
     {
         "folke/trouble.nvim",
         dependencies = { "nvim-tree/nvim-web-devicons" },
         config = function()
-            local actions = require("telescope.actions")
-            local open_with_trouble = require("trouble.sources.telescope").open
-
-            -- Use this to add more results without clearing the trouble list
-            local add_to_trouble = require("trouble.sources.telescope").add
-
-            local telescope = require("telescope")
-            telescope.setup({
-                defaults = {
-                    mappings = {
-                        i = { ["<c-t>"] = open_with_trouble },
-                        n = { ["<c-t>"] = open_with_trouble },
-                    },
-                },
-            })
-
-            require("trouble").setup {}
             require("trouble").setup {}
         end,
         keys = {
@@ -299,33 +340,12 @@ return {
             },
         }
     },
-    {
-        "folke/todo-comments.nvim",
-        dependencies = { "nvim-lua/plenary.nvim" },
-        opts = {
-            -- your configuration comes here
-            -- or leave it empty to use the default settings
-            -- refer to the configuration section below
-        },
-        keys = {
-            {
-                "<leader>xt",
-                "<cmd>TodoTrouble<cr>",
-                desc = "Diagnostics (Trouble)",
-            },
-        }
-    },
 
+    -- ============================================================
+    -- UI & Notifications
+    -- ============================================================
 
-    -- Commenting utility
-    {
-        "numToStr/Comment.nvim",
-        config = function()
-            require("Comment").setup()
-        end
-    },
-
-    -- Noice for better UI/notifications
+    -- Better UI/notifications
     {
         "folke/noice.nvim",
         dependencies = { "MunifTanjim/nui.nvim", "hrsh7th/nvim-cmp" },
@@ -382,6 +402,7 @@ return {
         end
     },
 
+    -- Status line
     {
         'nvim-lualine/lualine.nvim',
         dependencies = { 'nvim-tree/nvim-web-devicons' },
@@ -393,8 +414,6 @@ return {
                 title = false,
                 filter = { range = true },
                 format = "{kind_icon}{symbol.name:Normal}",
-                -- The following line is needed to fix the background color
-                -- Set it to the lualine section you want to use
                 hl_group = "lualine_c_normal",
             })
             require("lualine").setup({
@@ -428,7 +447,11 @@ return {
         end,
     },
 
+    -- ============================================================
+    -- Color Scheme
+    -- ============================================================
 
+    -- Catppuccin theme
     {
         "catppuccin/nvim",
         name = "catppuccin",
@@ -451,27 +474,4 @@ return {
             vim.cmd.colorscheme "catppuccin"
         end
     },
-
-    {
-        "nvim-neotest/neotest",
-        dependencies = {
-            "stevanmilic/neotest-scala",
-            "nvim-tree/nvim-web-devicons",
-            "nvim-neotest/nvim-nio",
-            "nvim-lua/plenary.nvim",
-            "antoinemadec/FixCursorHold.nvim",
-            "nvim-treesitter/nvim-treesitter"
-        },
-        config = function()
-            require("neotest").setup({
-                adapters = {
-                    require("neotest-scala")({
-                        runner = "sbt",
-                        framework = "scalatest",
-                    })
-                }
-            })
-            vim.keymap.set('n', '<leader>tt', ':lua require("neotest").run.run(vim.fn.expand("%"))<CR>', {})
-        end
-    }
 }

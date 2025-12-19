@@ -1,0 +1,48 @@
+[theme]
+theme = "modern"
+[icons]
+icons = "emoji"
+
+[theme.overrides]
+separator = " "
+idle_bg = "{color0}"
+idle_fg = "{color15}"
+info_fg = "{color4}"
+good_fg = "{color2}"
+warning_fg = "{color3}"
+critical_fg = "{color1}"
+
+[[block]]
+block = "cpu"
+interval = 5
+format = " CPU: $utilization "
+
+[[block]]
+block = "memory"
+format = " RAM: $mem_used/$mem_total "
+interval = 5
+
+[[block]]
+block = "time"
+interval = 1
+format = " $timestamp.datetime(f:'%Y-%m-%d %H:%M:%S ')"
+
+[[block]]
+block = "battery"
+interval = 5
+format = " $icon $percentage "
+full_format = " $icon $percentage "
+charging_format = " $icon $percentage "
+not_charging_format = " $icon $percentage "
+empty_format = " No battery "
+missing_format = " No battery "
+
+[[block]]
+block = "custom"
+command = "dunstctl count history"
+interval = 1
+signal = 12
+
+[[block.click]]
+button = "left"
+cmd = "dunstctl history-pop"
