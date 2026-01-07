@@ -26,6 +26,7 @@ bindsym $mod+Return exec alacritty
 # Lock screen (with pywal background)
 exec_always --no-startup-id bash -c 'RESOLUTION=$(xrandr --current | grep "Screen 0" | grep -oP "current \K\d+ x \d+" | tr -d " "); convert "$(< "${HOME}/.cache/wal/wal")" -resize ${RESOLUTION}^ -gravity center -extent ${RESOLUTION} -blur 0x8 -fill black -colorize 70% /tmp/lock_bg.png'
 bindsym ctrl+l exec i3lock -i /tmp/lock_bg.png --clock --time-color=ffffffff --date-color=ffffffff
+bindsym $mod+Shift+s exec screengrab
 
 # Display management
 bindsym $mod+p exec xrandr --auto
